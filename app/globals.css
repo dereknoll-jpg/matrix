@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #eaf2ff;
-  --muted: #95a7bd;
+  --ink: #0f172a;
+  --muted: #475569;
   --line: rgba(148, 163, 184, 0.24);
-  --soft: rgba(15, 23, 42, 0.78);
-  --card: rgba(15, 23, 42, 0.76);
+  --soft: rgba(239, 246, 255, 0.9);
+  --card: rgba(255, 255, 255, 0.92);
   --navy: #081528;
   --blue: #38bdf8;
   --teal: #2dd4bf;
@@ -889,7 +889,6 @@ td.score {
 }
 
 .simple-access-card,
-.hero-copy,
 .card,
 .sidebar-card,
 .kpi,
@@ -897,7 +896,7 @@ td.score {
 .personal-result {
   border-color: rgba(148, 163, 184, 0.22);
   background:
-    linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(8, 21, 40, 0.86)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(226, 238, 252, 0.9)),
     var(--card);
   color: var(--ink);
 }
@@ -913,7 +912,7 @@ td.score {
 }
 
 .simple-access-card h1 {
-  color: var(--ink);
+  color: #061529;
 }
 
 .access-kicker {
@@ -936,8 +935,10 @@ td.score {
 .coverage-row strong,
 .roster strong,
 .sidebar-card h2,
-.card h2 {
-  color: var(--ink);
+.card h2,
+.section-title h2,
+.lock-card h2 {
+  color: #061529;
 }
 
 .access-logo,
@@ -955,28 +956,28 @@ button.submit {
 }
 
 .simple-switch {
-  background: rgba(2, 6, 23, 0.58);
+  background: rgba(226, 232, 240, 0.92);
   border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .simple-switch button:not(.active) {
-  color: #b7c6d8;
+  color: #475569;
 }
 
 .simple-passcode-label,
 label {
-  color: #dbeafe;
+  color: #172033;
 }
 
 input,
 select {
   border-color: rgba(148, 163, 184, 0.32);
-  background: rgba(2, 6, 23, 0.72);
+  background: rgba(255, 255, 255, 0.94);
   color: var(--ink);
 }
 
 select option {
-  background: #0b1425;
+  background: white;
   color: var(--ink);
 }
 
@@ -994,7 +995,7 @@ input::placeholder {
 .progress-block,
 .score-preview {
   border-color: rgba(148, 163, 184, 0.2);
-  background: rgba(15, 23, 42, 0.68);
+  background: rgba(255, 255, 255, 0.76);
 }
 
 .hero {
@@ -1002,10 +1003,17 @@ input::placeholder {
 }
 
 .hero-copy {
+  border-color: rgba(148, 163, 184, 0.22);
+  color: white;
   min-height: 260px;
   background:
     radial-gradient(circle at 82% 12%, rgba(56, 189, 248, 0.22), transparent 20rem),
     linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(8, 21, 40, 0.9));
+}
+
+.hero-copy h1,
+.hero-copy .eyebrow {
+  color: white;
 }
 
 .hero-copy::after {
@@ -1014,25 +1022,25 @@ input::placeholder {
 
 button {
   background: rgba(148, 163, 184, 0.14);
-  color: var(--ink);
+  color: #0f172a;
 }
 
 button.secondary,
 .section-title .secondary,
 .dashboard .secondary {
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.08);
   color: var(--ink);
   border-color: rgba(148, 163, 184, 0.24);
 }
 
 .notice {
-  color: #d9fff4;
-  background: rgba(20, 184, 166, 0.14);
+  color: #0f3a30;
+  background: rgba(204, 251, 241, 0.92);
 }
 
 .notice.error {
-  color: #fecaca;
-  background: rgba(220, 38, 38, 0.16);
+  color: #7f1d1d;
+  background: rgba(254, 226, 226, 0.94);
 }
 
 .progress-track,
@@ -1068,8 +1076,8 @@ button.secondary,
   padding: 14px;
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 18px;
-  background: rgba(2, 6, 23, 0.42);
-  color: #dbeafe;
+  background: rgba(248, 250, 252, 0.96);
+  color: #172033;
   cursor: pointer;
   transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
@@ -1085,22 +1093,40 @@ button.secondary,
   height: 38px;
   place-items: center;
   border-radius: 12px;
-  background: rgba(148, 163, 184, 0.14);
-  color: #99f6e4;
+  background: rgba(226, 232, 240, 0.92);
+  color: #0f766e;
   font-size: 0.9rem;
 }
 
 .options .answer-option.selected {
-  border-color: rgba(94, 234, 212, 0.72);
+  border-color: #0f766e;
   background:
-    linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(45, 212, 191, 0.14)),
-    rgba(15, 23, 42, 0.74);
-  box-shadow: 0 18px 34px rgba(45, 212, 191, 0.12);
+    linear-gradient(135deg, rgba(20, 184, 166, 0.24), rgba(56, 189, 248, 0.16)),
+    #e6fffb;
+  box-shadow: 0 18px 34px rgba(15, 118, 110, 0.18);
+  color: #042f2e;
+  font-weight: 850;
 }
 
 .options .answer-option.selected b {
-  background: linear-gradient(135deg, #38bdf8, #2dd4bf);
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
   color: #04111f;
+}
+
+.options .answer-option.selected::after {
+  content: "✓";
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: #0f766e;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 950;
 }
 
 .matrix-wrap,
@@ -1109,7 +1135,7 @@ table {
 }
 
 table {
-  background: rgba(15, 23, 42, 0.84);
+  background: white;
 }
 
 th {
