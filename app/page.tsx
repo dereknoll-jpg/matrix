@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   categories,
   quizQuestions,
   scoreAssessment,
   techs,
-  validateComplete,
   type AssessmentAnswers,
   type QuizAnswers,
   type SubmissionResult,
+  validateComplete,
 } from "../lib/assessment";
 
 type StoredSubmission = {
@@ -52,10 +52,13 @@ function shortDate(value: string) {
 
 export default function Home() {
   const [mode, setMode] = useState<"assessment" | "matrix">("assessment");
-  const [techName, setTechName] = useState("");
+  const [assessmentPasscode, setAssessmentPasscode] = useState("");
+  const [matrixPasscode, setMatrixPasscode] = useState("");
+  const [activeTech, setActiveTech] = useState("");
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [quiz, setQuiz] = useState<QuizAnswers>({});
   const [submissions, setSubmissions] = useState<StoredSubmission[]>([]);
+  const [matrixUnlocked, setMatrixUnlocked] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [lastResult, setLastResult] = useState<SubmissionResult | null>(null);
@@ -65,7 +68,6 @@ export default function Home() {
   const totalItems = categories.reduce((sum, category) => sum + category.statements.length, 0) + quizQuestions.length;
   const completedItems = Object.keys(answers).filter((key) => answers[key]).length + Object.keys(quiz).length;
   const percentDone = Math.round((completedItems / totalItems) * 100);
-  const completedTechs = new Set(submissions.map((item) => item.techName));
   const averageOverall = submissions.length
     ? Math.round((submissions.reduce((sum, item) => sum + item.overall, 0) / submissions.length) * 10) / 10
     : 0;
@@ -92,29 +94,70 @@ export default function Home() {
 
   const biggestGap = [...categoryAverages].filter((item) => item.average > 0).sort((a, b) => a.average - b.average)[0];
 
-  async function loadSubmissions() {
+  async function unlockAssessment() {
+    setError("");
+    setStatus("");
+
     try {
-      const response = await fetch("/api/submissions", { cache: "no-store" });
+      const response = await fetch("/api/passcode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purpose: "assessment", passcode: assessmentPasscode }),
+      });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Could not load submissions");
-      setSubmissions(data.submissions ?? []);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Could not load submissions");
+      if (!response.ok) throw new Error(data.error ?? "Invalid technician passcode.");
+
+      setActiveTech(data.techName);
+      setAnswers({});
+      setQuiz({});
+      setLastResult(null);
+      setStatus(`Assessment unlocked for ${data.techName}.`);
+    } catch (unlockError) {
+      setError(unlockError instanceof Error ? unlockError.message : "Could not unlock assessment.");
     }
   }
 
-  useEffect(() => {
-    // Loading persisted submissions on first render is the intended page synchronization point.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadSubmissions();
-  }, []);
+  async function unlockMatrix() {
+    setError("");
+    setStatus("");
+
+    try {
+      const response = await fetch("/api/passcode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purpose: "matrix", passcode: matrixPasscode }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Invalid manager passcode.");
+
+      setMatrixUnlocked(true);
+      setStatus("Team matrix unlocked.");
+      await loadSubmissions(matrixPasscode);
+    } catch (unlockError) {
+      setError(unlockError instanceof Error ? unlockError.message : "Could not unlock matrix.");
+    }
+  }
+
+  async function loadSubmissions(passcode = matrixPasscode) {
+    try {
+      const response = await fetch("/api/submissions", {
+        cache: "no-store",
+        headers: { "x-admin-passcode": passcode },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Could not load submissions.");
+      setSubmissions(data.submissions ?? []);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Could not load submissions.");
+    }
+  }
 
   async function submitAssessment() {
     setError("");
     setStatus("");
 
-    if (!techName) {
-      setError("Select your name before submitting.");
+    if (!activeTech) {
+      setError("Enter your assigned passcode before submitting.");
       return;
     }
     if (!completion.complete) {
@@ -127,16 +170,16 @@ export default function Home() {
       const response = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ techName, answers, quiz }),
+        body: JSON.stringify({ techPasscode: assessmentPasscode, answers, quiz }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Could not save assessment");
+      if (!response.ok) throw new Error(data.error ?? "Could not save assessment.");
+
       setLastResult(data.submission);
-      setStatus("Assessment saved. Your score is now included in the team matrix.");
-      await loadSubmissions();
-      setMode("matrix");
+      setStatus("Assessment saved. Thank you — your score is now included for the manager matrix.");
+      if (matrixUnlocked) await loadSubmissions();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Could not save assessment");
+      setError(saveError instanceof Error ? saveError.message : "Could not save assessment.");
       setStatus("");
     }
   }
@@ -157,8 +200,8 @@ export default function Home() {
           <p className="eyebrow">Field Services IT</p>
           <h1>Service Desk Skill Assessment Portal</h1>
           <p>
-            Send one link to your team. Each technician completes a guided self-assessment plus scenario quiz,
-            and the results roll up into a scoring matrix for coaching, coverage, and training priorities.
+            Send one link to your team. Each technician uses their assigned passcode to complete the
+            assessment, and the manager passcode unlocks the team scoring matrix.
           </p>
           <div className="hero-actions">
             <button onClick={() => setMode("assessment")} className={mode === "assessment" ? "active" : ""}>
@@ -173,9 +216,9 @@ export default function Home() {
           </div>
         </div>
         <div className="hero-panel">
-          <span>Completion</span>
-          <strong>{submissions.length}/{techs.length}</strong>
-          <p>{submissions.length ? `${averageOverall.toFixed(1)} team average` : "Waiting for first assessment"}</p>
+          <span>{matrixUnlocked ? "Completion" : "Matrix locked"}</span>
+          <strong>{matrixUnlocked ? `${submissions.length}/${techs.length}` : "•••"}</strong>
+          <p>{matrixUnlocked && submissions.length ? `${averageOverall.toFixed(1)} team average` : "Enter manager passcode to view team results"}</p>
           <div className="mini-bars" aria-hidden="true">
             {categoryAverages.map((category) => (
               <i key={category.key} style={{ height: `${Math.max(category.average, 0.3) * 18}%` }} />
@@ -188,114 +231,134 @@ export default function Home() {
       {error && <div className="notice error">{error}</div>}
 
       {mode === "assessment" ? (
-        <section className="assessment-grid">
-          <aside className="sidebar-card">
-            <h2>Start here</h2>
-            <label>
-              Technician
-              <select value={techName} onChange={(event) => setTechName(event.target.value)}>
-                <option value="">Select your name</option>
-                {techs.map((tech) => (
-                  <option key={tech} value={tech}>
-                    {tech}{completedTechs.has(tech) ? " — submitted" : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="progress-block">
-              <div>
-                <span>Progress</span>
-                <strong>{percentDone}%</strong>
+        activeTech ? (
+          <section className="assessment-grid">
+            <aside className="sidebar-card">
+              <h2>{activeTech}</h2>
+              <p className="hint">Your passcode has identified you. No name selection is needed.</p>
+              <div className="progress-block">
+                <div>
+                  <span>Progress</span>
+                  <strong>{percentDone}%</strong>
+                </div>
+                <div className="progress-track">
+                  <span style={{ width: `${percentDone}%` }} />
+                </div>
+                <p>{completedItems} of {totalItems} items complete</p>
               </div>
-              <div className="progress-track">
-                <span style={{ width: `${percentDone}%` }} />
+              <div className="score-preview">
+                <span>Current preview</span>
+                <strong>{Number.isFinite(preview.overall) ? preview.overall.toFixed(1) : "—"}</strong>
+                <p>{preview.level}</p>
               </div>
-              <p>{completedItems} of {totalItems} items complete</p>
-            </div>
-            <div className="score-preview">
-              <span>Current preview</span>
-              <strong>{Number.isFinite(preview.overall) ? preview.overall.toFixed(1) : "—"}</strong>
-              <p>{preview.level}</p>
-            </div>
-            <button className="submit" onClick={submitAssessment}>Submit assessment</button>
-            {!completion.complete && (
-              <p className="hint">
-                Missing {completion.missingStatements.length} self-ratings and {completion.missingQuiz.length} quiz answers.
-              </p>
-            )}
-          </aside>
+              <button className="submit" onClick={submitAssessment}>Submit assessment</button>
+              {!completion.complete && (
+                <p className="hint">
+                  Missing {completion.missingStatements.length} self-ratings and {completion.missingQuiz.length} quiz answers.
+                </p>
+              )}
+              {lastResult && (
+                <div className="score-preview">
+                  <span>Submitted result</span>
+                  <strong>{lastResult.overall.toFixed(1)}</strong>
+                  <p>{lastResult.level}</p>
+                </div>
+              )}
+            </aside>
 
-          <div className="assessment-flow">
-            <section className="card">
-              <div className="section-title">
-                <p className="eyebrow">Part 1</p>
-                <h2>Self-assessment by service desk category</h2>
-                <p>Use 1 for “not yet” and 5 for “expert / sets standards.” Be honest — this works best as a coaching tool.</p>
-              </div>
-              <div className="category-stack">
-                {categories.map((category) => (
-                  <article className="category-card" key={category.key}>
-                    <div>
-                      <h3>{category.label}</h3>
-                      <p>{category.description}</p>
-                    </div>
-                    {category.statements.map((statement) => (
-                      <label className="rating-row" key={statement.id}>
-                        <span>{statement.text}</span>
-                        <select
-                          value={answers[statement.id] ?? ""}
-                          onChange={(event) =>
-                            setAnswers((current) => ({ ...current, [statement.id]: Number(event.target.value) }))
-                          }
-                        >
-                          <option value="">Score</option>
-                          {[1, 2, 3, 4, 5].map((value) => (
-                            <option key={value} value={value}>
-                              {value} — {ratingLabels[value]}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    ))}
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="card">
-              <div className="section-title">
-                <p className="eyebrow">Part 2</p>
-                <h2>Scenario quiz</h2>
-                <p>These questions add a practical check to the self-score. The quiz contributes 30% of each applicable category score.</p>
-              </div>
-              <div className="quiz-list">
-                {quizQuestions.map((question, index) => (
-                  <article className="quiz-card" key={question.id}>
-                    <div className="quiz-heading">
-                      <span>Question {index + 1}</span>
-                      <strong>{categories.find((category) => category.key === question.category)?.shortLabel}</strong>
-                    </div>
-                    <h3>{question.prompt}</h3>
-                    <div className="options">
-                      {question.options.map((option, optionIndex) => (
-                        <label key={option}>
-                          <input
-                            type="radio"
-                            name={question.id}
-                            checked={quiz[question.id] === optionIndex}
-                            onChange={() => setQuiz((current) => ({ ...current, [question.id]: optionIndex }))}
-                          />
-                          <span>{option}</span>
+            <div className="assessment-flow">
+              <section className="card">
+                <div className="section-title">
+                  <p className="eyebrow">Part 1</p>
+                  <h2>Self-assessment by service desk category</h2>
+                  <p>Use 1 for “not yet” and 5 for “expert / sets standards.” Be honest — this works best as a coaching tool.</p>
+                </div>
+                <div className="category-stack">
+                  {categories.map((category) => (
+                    <article className="category-card" key={category.key}>
+                      <div>
+                        <h3>{category.label}</h3>
+                        <p>{category.description}</p>
+                      </div>
+                      {category.statements.map((statement) => (
+                        <label className="rating-row" key={statement.id}>
+                          <span>{statement.text}</span>
+                          <select
+                            value={answers[statement.id] ?? ""}
+                            onChange={(event) =>
+                              setAnswers((current) => ({ ...current, [statement.id]: Number(event.target.value) }))
+                            }
+                          >
+                            <option value="">Score</option>
+                            {[1, 2, 3, 4, 5].map((value) => (
+                              <option key={value} value={value}>
+                                {value} — {ratingLabels[value]}
+                              </option>
+                            ))}
+                          </select>
                         </label>
                       ))}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          </div>
-        </section>
-      ) : (
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="card">
+                <div className="section-title">
+                  <p className="eyebrow">Part 2</p>
+                  <h2>Scenario quiz</h2>
+                  <p>These questions add a practical check to the self-score. The quiz contributes 30% of each applicable category score.</p>
+                </div>
+                <div className="quiz-list">
+                  {quizQuestions.map((question, index) => (
+                    <article className="quiz-card" key={question.id}>
+                      <div className="quiz-heading">
+                        <span>Question {index + 1}</span>
+                        <strong>{categories.find((category) => category.key === question.category)?.shortLabel}</strong>
+                      </div>
+                      <h3>{question.prompt}</h3>
+                      <div className="options">
+                        {question.options.map((option, optionIndex) => (
+                          <label key={option}>
+                            <input
+                              type="radio"
+                              name={question.id}
+                              checked={quiz[question.id] === optionIndex}
+                              onChange={() => setQuiz((current) => ({ ...current, [question.id]: optionIndex }))}
+                            />
+                            <span>{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </section>
+        ) : (
+          <section className="lock-screen">
+            <div className="card lock-card">
+              <p className="eyebrow">Technician access</p>
+              <h2>Enter your assigned assessment passcode</h2>
+              <p>Your passcode identifies you automatically, so you will not need to choose your name.</p>
+              <label>
+                Assessment passcode
+                <input
+                  type="password"
+                  value={assessmentPasscode}
+                  onChange={(event) => setAssessmentPasscode(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") unlockAssessment();
+                  }}
+                  autoComplete="one-time-code"
+                />
+              </label>
+              <button className="submit" onClick={unlockAssessment}>Unlock assessment</button>
+            </div>
+          </section>
+        )
+      ) : matrixUnlocked ? (
         <section className="dashboard">
           <div className="kpi-grid">
             <div className="kpi">
@@ -320,17 +383,6 @@ export default function Home() {
             </div>
           </div>
 
-          {lastResult && (
-            <div className="personal-result">
-              <div>
-                <span>Latest submitted result</span>
-                <h2>{techName}: {lastResult.overall.toFixed(1)} · {lastResult.level}</h2>
-              </div>
-              <p><strong>Strengths:</strong> {lastResult.strengths.join(", ")}</p>
-              <p><strong>Growth areas:</strong> {lastResult.gaps.join(", ")}</p>
-            </div>
-          )}
-
           <section className="card">
             <div className="section-title split">
               <div>
@@ -338,7 +390,7 @@ export default function Home() {
                 <h2>Team scoring matrix</h2>
                 <p>Scores blend self-assessment and scenario quiz performance. Blank rows mean that tech has not submitted yet.</p>
               </div>
-              <button className="secondary" onClick={loadSubmissions}>Refresh results</button>
+              <button className="secondary" onClick={() => loadSubmissions()}>Refresh results</button>
             </div>
             <div className="matrix-wrap">
               <table>
@@ -424,6 +476,27 @@ export default function Home() {
               </div>
             </div>
           </section>
+        </section>
+      ) : (
+        <section className="lock-screen">
+          <div className="card lock-card">
+            <p className="eyebrow">Manager access</p>
+            <h2>Enter the manager passcode</h2>
+            <p>The matrix and aggregate submissions are protected so public visitors cannot view team results.</p>
+            <label>
+              Manager passcode
+              <input
+                type="password"
+                value={matrixPasscode}
+                onChange={(event) => setMatrixPasscode(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") unlockMatrix();
+                }}
+                autoComplete="current-password"
+              />
+            </label>
+            <button className="submit" onClick={unlockMatrix}>Unlock team matrix</button>
+          </div>
         </section>
       )}
     </main>

@@ -262,6 +262,41 @@ select {
   color: var(--ink);
 }
 
+input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  padding: 12px;
+  color: var(--ink);
+}
+
+input:focus,
+select:focus {
+  outline: 3px solid rgba(94, 234, 212, 0.45);
+  border-color: var(--teal);
+}
+
+.lock-screen {
+  display: grid;
+  min-height: 420px;
+  place-items: center;
+}
+
+.lock-card {
+  width: min(100%, 540px);
+}
+
+.lock-card h2 {
+  margin: 0 0 10px;
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+  letter-spacing: -0.05em;
+}
+
+.lock-card label {
+  margin-top: 22px;
+}
+
 .progress-block,
 .score-preview {
   margin-top: 20px;

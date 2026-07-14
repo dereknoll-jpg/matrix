@@ -1,11 +1,11 @@
 import {
   scoreAssessment,
-  techs,
   validateComplete,
   type AssessmentAnswers,
   type QuizAnswers,
   type SubmissionResult,
 } from "../../../lib/assessment";
+import { verifyAdminPasscode, verifyTechPasscode } from "../../../lib/passcodes";
 
 export const dynamic = "force-dynamic";
 
@@ -90,8 +90,14 @@ function routeError(error: unknown) {
   return message;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const adminPasscode = new URL(request.url).searchParams.get("adminPasscode") ?? request.headers.get("x-admin-passcode") ?? "";
+    const adminCheck = verifyAdminPasscode(adminPasscode);
+    if (!adminCheck.ok) {
+      return Response.json({ error: adminCheck.message }, { status: 401 });
+    }
+
     const submissions = await readSubmissions();
     return Response.json({
       submissions: submissions.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
@@ -105,15 +111,19 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as {
-      techName?: string;
+      techPasscode?: string;
       answers?: AssessmentAnswers;
       quiz?: QuizAnswers;
     };
 
-    const techName = payload.techName?.trim() ?? "";
-    if (!techs.includes(techName as never)) {
-      return Response.json({ error: "Select a valid technician." }, { status: 400 });
+    const techCheck = verifyTechPasscode(payload.techPasscode ?? "");
+    if (!techCheck.ok) {
+      return Response.json({ error: techCheck.message }, { status: 401 });
     }
+    if (techCheck.kind !== "tech") {
+      return Response.json({ error: "Invalid technician passcode." }, { status: 401 });
+    }
+    const techName = techCheck.techName;
 
     const answers = payload.answers ?? {};
     const quiz = payload.quiz ?? {};

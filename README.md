@@ -4,7 +4,9 @@ Web-based assessment portal for service desk / field services IT technicians.
 
 ## What it does
 
-- Lets each technician select their name and complete a guided self-assessment.
+- Lets each technician enter their assigned passcode and complete a guided self-assessment.
+- Protects assessment access with unique technician passcodes.
+- Protects the team matrix with a manager passcode.
 - Adds scenario quiz questions for practical scoring.
 - Produces a team scoring matrix by category.
 - Shows category averages, submission status, strengths, and growth areas.
@@ -30,9 +32,20 @@ This app is configured as a standard Next.js app.
 4. Ensure these environment variables are present in Vercel:
    - `KV_REST_API_URL`
    - `KV_REST_API_TOKEN`
+   - `ADMIN_MATRIX_PASSCODE`
+   - `TECH_PASSCODES_JSON`
 5. Deploy.
 
 Without KV configured, the app still builds and runs, but submissions only use temporary in-memory storage and will not reliably persist across deployments or serverless instances.
+
+`TECH_PASSCODES_JSON` should be a JSON object whose keys exactly match technician names, for example:
+
+```json
+{
+  "Dalton Tyler": "replace-with-passcode",
+  "Tim Kay": "replace-with-passcode"
+}
+```
 
 ## Local development
 
