@@ -94,6 +94,14 @@ export default function Home() {
   });
 
   const biggestGap = [...categoryAverages].filter((item) => item.average > 0).sort((a, b) => a.average - b.average)[0];
+  const heroKicker = mode === "assessment" ? "Assessment" : "Team matrix";
+  const heroTitle = mode === "assessment" ? "Field Services North Assessment" : "Field Services North Matrix";
+  const heroSubtitle =
+    mode === "assessment"
+      ? activeTech
+        ? `${activeTech}, complete each section carefully. Your submission is final once recorded.`
+        : "Enter your assigned passcode to begin."
+      : "Manager view for team readiness, strengths, and coverage.";
 
   async function unlockAssessment() {
     setError("");
@@ -224,24 +232,20 @@ export default function Home() {
         <div className="access-ambient two" />
         <section className="simple-access-card">
           <div className="access-brand-row">
-            <div className="access-logo">IT</div>
+            <div className="access-logo">FS</div>
             <div>
-              <p className="eyebrow">Field Services IT</p>
-              <strong>Skill Matrix Portal</strong>
+              <p className="eyebrow">Field Services North</p>
+              <strong>Assessment Portal</strong>
             </div>
           </div>
 
           <div className="access-hero-grid">
             <div>
-              <h1>{isAssessment ? "Start your skill assessment." : "Unlock the team matrix."}</h1>
-              <p>
-                {isAssessment
-                  ? "Use your unique passcode to open your assessment. Your identity is matched automatically and each assessment can only be submitted once."
-                  : "Manager access shows aggregate scores, coverage gaps, submission status, and team strengths."}
-              </p>
+              <p className="access-kicker">{isAssessment ? "Technician access" : "Manager access"}</p>
+              <h1>{isAssessment ? "Field Services North Assessment" : "Team Matrix"}</h1>
             </div>
             <div className="access-mini-panel" aria-hidden="true">
-              <span>Coverage view</span>
+              <span>Readiness</span>
               <b>{techs.length}</b>
               <small>technicians</small>
             </div>
@@ -282,16 +286,16 @@ export default function Home() {
 
           <div className="access-proof-grid">
             <div>
-              <b>Private by passcode</b>
-              <span>Techs see their own result only.</span>
+              <b>Secure access</b>
+              <span>Assigned passcodes only.</span>
             </div>
             <div>
-              <b>One submission</b>
-              <span>Results are locked after submit.</span>
+              <b>Final submission</b>
+              <span>One completed assessment per tech.</span>
             </div>
             <div>
-              <b>Manager matrix</b>
-              <span>Protected aggregate team view.</span>
+              <b>Team readiness</b>
+              <span>Protected manager view.</span>
             </div>
           </div>
 
@@ -306,12 +310,9 @@ export default function Home() {
     <main>
       <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">Field Services IT</p>
-          <h1>Service Desk Skill Assessment Portal</h1>
-          <p>
-            Send one link to your team. Each technician uses their assigned passcode to complete the
-            assessment, and the manager passcode unlocks the team scoring matrix.
-          </p>
+          <p className="eyebrow">{heroKicker}</p>
+          <h1>{heroTitle}</h1>
+          <p>{heroSubtitle}</p>
           <div className="hero-actions">
             <button onClick={() => setMode("assessment")} className={mode === "assessment" ? "active" : ""}>
               Take assessment
@@ -322,16 +323,6 @@ export default function Home() {
             <button className="secondary" onClick={copyLink}>
               Copy share link
             </button>
-          </div>
-        </div>
-        <div className="hero-panel">
-          <span>{matrixUnlocked ? "Completion" : "Matrix locked"}</span>
-          <strong>{matrixUnlocked ? `${submissions.length}/${techs.length}` : "•••"}</strong>
-          <p>{matrixUnlocked && submissions.length ? `${averageOverall.toFixed(1)} team average` : "Enter manager passcode to view team results"}</p>
-          <div className="mini-bars" aria-hidden="true">
-            {categoryAverages.map((category) => (
-              <i key={category.key} style={{ height: `${Math.max(category.average, 0.3) * 18}%` }} />
-            ))}
           </div>
         </div>
       </section>
@@ -375,7 +366,7 @@ export default function Home() {
           <section className="assessment-grid">
             <aside className="sidebar-card">
               <h2>{activeTech}</h2>
-              <p className="hint">Your passcode has identified you. No name selection is needed.</p>
+              <p className="hint">Complete each section before submitting your final assessment.</p>
               <div className="progress-block">
                 <div>
                   <span>Progress</span>
@@ -410,8 +401,8 @@ export default function Home() {
               <section className="card">
                 <div className="section-title">
                   <p className="eyebrow">Part 1</p>
-                  <h2>Self-assessment by service desk category</h2>
-                  <p>Use 1 for “not yet” and 5 for “expert / sets standards.” Be honest — this works best as a coaching tool.</p>
+                  <h2>Category ratings</h2>
+                  <p>Rate your current confidence for each Field Services skill area.</p>
                 </div>
                 <div className="category-stack">
                   {categories.map((category) => (
@@ -447,7 +438,7 @@ export default function Home() {
                 <div className="section-title">
                   <p className="eyebrow">Part 2</p>
                   <h2>Scenario quiz</h2>
-                  <p>These questions add a practical check to the self-score. The quiz contributes 30% of each applicable category score.</p>
+                  <p>Select the best response for each service scenario.</p>
                 </div>
                 <div className="quiz-list">
                   {quizQuestions.map((question, index) => (
@@ -459,13 +450,18 @@ export default function Home() {
                       <h3>{question.prompt}</h3>
                       <div className="options">
                         {question.options.map((option, optionIndex) => (
-                          <label key={option}>
+                          <label
+                            key={option}
+                            className={quiz[question.id] === optionIndex ? "answer-option selected" : "answer-option"}
+                          >
                             <input
+                              className="sr-only"
                               type="radio"
                               name={question.id}
                               checked={quiz[question.id] === optionIndex}
                               onChange={() => setQuiz((current) => ({ ...current, [question.id]: optionIndex }))}
                             />
+                            <b>{String.fromCharCode(65 + optionIndex)}</b>
                             <span>{option}</span>
                           </label>
                         ))}
@@ -480,8 +476,7 @@ export default function Home() {
           <section className="lock-screen">
             <div className="card lock-card">
               <p className="eyebrow">Technician access</p>
-              <h2>Enter your assigned assessment passcode</h2>
-              <p>Your passcode identifies you automatically, so you will not need to choose your name.</p>
+              <h2>Field Services North Assessment</h2>
               <label>
                 Assessment passcode
                 <input
@@ -622,7 +617,6 @@ export default function Home() {
           <div className="card lock-card">
             <p className="eyebrow">Manager access</p>
             <h2>Enter the manager passcode</h2>
-            <p>The matrix and aggregate submissions are protected so public visitors cannot view team results.</p>
             <label>
               Manager passcode
               <input

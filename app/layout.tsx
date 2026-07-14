@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Field Services IT Skill Assessment",
-  description: "A web-based assessment and scoring matrix for field services and service desk IT teams.",
+  title: "Field Services North Assessment",
+  description: "Field Services North assessment and team matrix.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
