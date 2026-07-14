@@ -10,8 +10,7 @@
     "build": "next build",
     "start": "next start",
     "test": "npm run build",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern assessment-portal --ignore-pattern outputs --ignore-pattern tools"
   },
   "dependencies": {
     "next": "16.2.6",

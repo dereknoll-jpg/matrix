@@ -24,8 +24,8 @@ Web-based assessment portal for service desk / field services IT technicians.
 
 This app is configured as a standard Next.js app.
 
-1. Push this folder to GitHub.
-2. Import the GitHub repository into Vercel.
+1. Push this repository to GitHub.
+2. Import the GitHub repository into Vercel using the repository root.
 3. Add Vercel KV / Upstash storage to the Vercel project.
 4. Ensure these environment variables are present in Vercel:
    - `KV_REST_API_URL`

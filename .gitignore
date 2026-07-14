@@ -40,3 +40,8 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# local Codex/workspace artifacts
+/.tools/
+/tools/
+/assessment-portal/
