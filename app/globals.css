@@ -918,15 +918,16 @@ td.score {
 .access-kicker {
   width: fit-content;
   margin: 0 0 16px;
-  padding: 8px 12px;
-  border: 1px solid rgba(94, 234, 212, 0.28);
+  padding: 9px 14px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
   border-radius: 999px;
-  background: rgba(45, 212, 191, 0.1);
-  color: #99f6e4;
+  background: linear-gradient(135deg, rgba(8, 21, 40, 0.96), rgba(15, 118, 110, 0.9));
+  color: white;
   font-size: 0.78rem;
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  box-shadow: 0 14px 30px rgba(15, 118, 110, 0.18);
 }
 
 .access-brand-row strong,
@@ -951,8 +952,11 @@ button.submit {
 
 .access-mini-panel,
 .result-hero-number {
-  background: linear-gradient(145deg, rgba(56, 189, 248, 0.24), rgba(45, 212, 191, 0.16));
-  border: 1px solid rgba(94, 234, 212, 0.24);
+  background:
+    radial-gradient(circle at 78% 18%, rgba(94, 234, 212, 0.22), transparent 8rem),
+    linear-gradient(145deg, rgba(8, 21, 40, 0.98), rgba(15, 118, 110, 0.9));
+  border: 1px solid rgba(15, 118, 110, 0.24);
+  box-shadow: 0 22px 48px rgba(15, 118, 110, 0.2);
 }
 
 .simple-switch {
@@ -1054,6 +1058,33 @@ button.secondary,
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+}
+
+.manager-access-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin: 0 0 20px;
+  padding: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(20, 184, 166, 0.16), transparent 14rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(226, 238, 252, 0.92));
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.18);
+}
+
+.manager-access-card h2 {
+  margin: 0;
+  color: #061529;
+  letter-spacing: -0.035em;
+}
+
+.manager-access-card span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
 }
 
 .portal-tabs button {
@@ -1222,6 +1253,18 @@ td {
 
   .section-title.split {
     display: grid;
+  }
+
+  .manager-access-card {
+    display: grid;
+  }
+
+  .manager-access-card .portal-tabs {
+    width: 100%;
+  }
+
+  .manager-access-card .portal-tabs button {
+    flex: 1;
   }
 
   .access-hero-grid,

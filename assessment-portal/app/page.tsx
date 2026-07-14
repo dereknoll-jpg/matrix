@@ -297,14 +297,21 @@ export default function Home() {
       {error && <div className="notice error">{error}</div>}
 
       {canViewMatrix && (
-        <nav className="portal-tabs" aria-label="Derek portal navigation">
-          <button onClick={() => setMode("assessment")} className={mode === "assessment" ? "active" : ""}>
-            Assessment
-          </button>
-          <button onClick={unlockDerekMatrix} className={mode === "matrix" ? "active" : ""}>
-            View team matrix
-          </button>
-        </nav>
+        <section className="manager-access-card" aria-label="Derek manager access">
+          <div>
+            <p className="eyebrow">Derek access</p>
+            <h2>Team assessment matrix</h2>
+            <span>Review team submissions, category averages, and readiness gaps.</span>
+          </div>
+          <nav className="portal-tabs" aria-label="Derek portal navigation">
+            <button onClick={() => setMode("assessment")} className={mode === "assessment" ? "active" : ""}>
+              My assessment
+            </button>
+            <button onClick={unlockDerekMatrix} className={mode === "matrix" ? "active" : ""}>
+              View team matrix
+            </button>
+          </nav>
+        </section>
       )}
 
       {mode === "assessment" ? (
