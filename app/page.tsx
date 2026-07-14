@@ -226,17 +226,21 @@ export default function Home() {
             <div className="access-logo">FS</div>
             <div>
               <p className="eyebrow">Field Services North</p>
-              <strong>Assessment Portal</strong>
+              <strong>Readiness Assessment</strong>
             </div>
           </div>
 
           <div className="access-hero-grid">
             <div>
               <p className="access-kicker">Technician access</p>
-              <h1>Field Services North Assessment</h1>
+              <h1 className="access-title">
+                <span>Field Services North</span>
+                <span>Assessment</span>
+              </h1>
+              <p className="access-subtitle">Enter your assigned passcode to begin.</p>
             </div>
             <div className="access-mini-panel" aria-hidden="true">
-              <span>Readiness</span>
+              <span>Roster</span>
               <b>{techs.length}</b>
               <small>technicians</small>
             </div>
@@ -260,21 +264,6 @@ export default function Home() {
           <button className="simple-submit" onClick={unlockAssessment}>
             Start assessment
           </button>
-
-          <div className="access-proof-grid">
-            <div>
-              <b>Secure access</b>
-              <span>Assigned passcodes only.</span>
-            </div>
-            <div>
-              <b>Final submission</b>
-              <span>One completed assessment per tech.</span>
-            </div>
-            <div>
-              <b>Team readiness</b>
-              <span>Protected manager view.</span>
-            </div>
-          </div>
 
           {status && <div className="notice">{status}</div>}
           {error && <div className="notice error">{error}</div>}
