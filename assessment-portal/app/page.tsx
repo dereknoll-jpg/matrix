@@ -53,7 +53,6 @@ function shortDate(value: string) {
 export default function Home() {
   const [mode, setMode] = useState<"assessment" | "matrix">("assessment");
   const [assessmentPasscode, setAssessmentPasscode] = useState("");
-  const [matrixPasscode, setMatrixPasscode] = useState("");
   const [activeTech, setActiveTech] = useState("");
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [quiz, setQuiz] = useState<QuizAnswers>({});
@@ -94,6 +93,7 @@ export default function Home() {
   });
 
   const biggestGap = [...categoryAverages].filter((item) => item.average > 0).sort((a, b) => a.average - b.average)[0];
+  const canViewMatrix = activeTech === "Derek Noll";
   const heroKicker = mode === "assessment" ? "Assessment" : "Team matrix";
   const heroTitle = mode === "assessment" ? "Field Services North Assessment" : "Field Services North Matrix";
   const heroSubtitle =
@@ -141,38 +141,40 @@ export default function Home() {
     }
   }
 
-  async function unlockMatrix() {
+  async function unlockDerekMatrix() {
     setError("");
     setStatus("");
 
-    try {
-      const response = await fetch("/api/passcode", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ purpose: "matrix", passcode: matrixPasscode }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Invalid manager passcode.");
+    if (!canViewMatrix) {
+      setError("Team matrix access is restricted.");
+      return;
+    }
 
+    const loaded = await loadSubmissions({ techPasscode: assessmentPasscode });
+    if (loaded) {
       setMatrixUnlocked(true);
+      setMode("matrix");
       setStatus("Team matrix unlocked.");
-      await loadSubmissions(matrixPasscode);
-    } catch (unlockError) {
-      setError(unlockError instanceof Error ? unlockError.message : "Could not unlock matrix.");
     }
   }
 
-  async function loadSubmissions(passcode = matrixPasscode) {
+  async function loadSubmissions(access: { adminPasscode?: string; techPasscode?: string } = {}) {
     try {
+      const headers: Record<string, string> = {};
+      if (access.techPasscode) headers["x-tech-passcode"] = access.techPasscode;
+      else if (access.adminPasscode) headers["x-admin-passcode"] = access.adminPasscode;
+
       const response = await fetch("/api/submissions", {
         cache: "no-store",
-        headers: { "x-admin-passcode": passcode },
+        headers,
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Could not load submissions.");
       setSubmissions(data.submissions ?? []);
+      return true;
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Could not load submissions.");
+      return false;
     }
   }
 
@@ -207,25 +209,14 @@ export default function Home() {
       setLastResult(data.submission);
       setAssessmentLocked(true);
       setStatus("Assessment saved. Thank you — your score is now included for the manager matrix.");
-      if (matrixUnlocked) await loadSubmissions();
+      if (matrixUnlocked && canViewMatrix) await loadSubmissions({ techPasscode: assessmentPasscode });
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Could not save assessment.");
       setStatus("");
     }
   }
 
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setStatus("Link copied. Send this same link to the team.");
-    } catch {
-      setStatus("Copy was blocked by the browser. You can copy the address from the address bar.");
-    }
-  }
-
-  if ((mode === "assessment" && !activeTech) || (mode === "matrix" && !matrixUnlocked)) {
-    const isAssessment = mode === "assessment";
-
+  if (!activeTech) {
     return (
       <main className="simple-access-main">
         <div className="access-ambient one" />
@@ -241,8 +232,8 @@ export default function Home() {
 
           <div className="access-hero-grid">
             <div>
-              <p className="access-kicker">{isAssessment ? "Technician access" : "Manager access"}</p>
-              <h1>{isAssessment ? "Field Services North Assessment" : "Team Matrix"}</h1>
+              <p className="access-kicker">Technician access</p>
+              <h1>Field Services North Assessment</h1>
             </div>
             <div className="access-mini-panel" aria-hidden="true">
               <span>Readiness</span>
@@ -251,37 +242,23 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="simple-switch">
-            <button onClick={() => setMode("assessment")} className={isAssessment ? "active" : ""}>
-              Assessment
-            </button>
-            <button onClick={() => setMode("matrix")} className={!isAssessment ? "active" : ""}>
-              Team matrix
-            </button>
-          </div>
-
           <label className="simple-passcode-label">
-            {isAssessment ? "Technician passcode" : "Manager passcode"}
+            Technician passcode
             <input
               type="password"
-              value={isAssessment ? assessmentPasscode : matrixPasscode}
-              onChange={(event) =>
-                isAssessment ? setAssessmentPasscode(event.target.value) : setMatrixPasscode(event.target.value)
-              }
+              value={assessmentPasscode}
+              onChange={(event) => setAssessmentPasscode(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  if (isAssessment) unlockAssessment();
-                  else unlockMatrix();
-                }
+                if (event.key === "Enter") unlockAssessment();
               }}
               autoFocus
               autoComplete="one-time-code"
-              placeholder={isAssessment ? "Enter your passcode" : "Enter manager passcode"}
+              placeholder="Enter your passcode"
             />
           </label>
 
-          <button className="simple-submit" onClick={isAssessment ? unlockAssessment : unlockMatrix}>
-            {isAssessment ? "Start assessment" : "Unlock matrix"}
+          <button className="simple-submit" onClick={unlockAssessment}>
+            Start assessment
           </button>
 
           <div className="access-proof-grid">
@@ -313,22 +290,22 @@ export default function Home() {
           <p className="eyebrow">{heroKicker}</p>
           <h1>{heroTitle}</h1>
           <p>{heroSubtitle}</p>
-          <div className="hero-actions">
-            <button onClick={() => setMode("assessment")} className={mode === "assessment" ? "active" : ""}>
-              Take assessment
-            </button>
-            <button onClick={() => setMode("matrix")} className={mode === "matrix" ? "active" : ""}>
-              View team matrix
-            </button>
-            <button className="secondary" onClick={copyLink}>
-              Copy share link
-            </button>
-          </div>
         </div>
       </section>
 
       {status && <div className="notice">{status}</div>}
       {error && <div className="notice error">{error}</div>}
+
+      {canViewMatrix && (
+        <nav className="portal-tabs" aria-label="Derek portal navigation">
+          <button onClick={() => setMode("assessment")} className={mode === "assessment" ? "active" : ""}>
+            Assessment
+          </button>
+          <button onClick={unlockDerekMatrix} className={mode === "matrix" ? "active" : ""}>
+            View team matrix
+          </button>
+        </nav>
+      )}
 
       {mode === "assessment" ? (
         activeTech && assessmentLocked && lastResult ? (
@@ -493,7 +470,7 @@ export default function Home() {
             </div>
           </section>
         )
-      ) : matrixUnlocked ? (
+      ) : canViewMatrix && matrixUnlocked ? (
         <section className="dashboard">
           <div className="kpi-grid">
             <div className="kpi">
@@ -525,7 +502,7 @@ export default function Home() {
                 <h2>Team scoring matrix</h2>
                 <p>Scores blend self-assessment and scenario quiz performance. Blank rows mean that tech has not submitted yet.</p>
               </div>
-              <button className="secondary" onClick={() => loadSubmissions()}>Refresh results</button>
+              <button className="secondary" onClick={() => loadSubmissions({ techPasscode: assessmentPasscode })}>Refresh results</button>
             </div>
             <div className="matrix-wrap">
               <table>
@@ -615,21 +592,9 @@ export default function Home() {
       ) : (
         <section className="lock-screen">
           <div className="card lock-card">
-            <p className="eyebrow">Manager access</p>
-            <h2>Enter the manager passcode</h2>
-            <label>
-              Manager passcode
-              <input
-                type="password"
-                value={matrixPasscode}
-                onChange={(event) => setMatrixPasscode(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") unlockMatrix();
-                }}
-                autoComplete="current-password"
-              />
-            </label>
-            <button className="submit" onClick={unlockMatrix}>Unlock team matrix</button>
+            <p className="eyebrow">Assessment</p>
+            <h2>Team matrix access is restricted.</h2>
+            <button className="submit" onClick={() => setMode("assessment")}>Return to assessment</button>
           </div>
         </section>
       )}

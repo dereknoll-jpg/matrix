@@ -12,9 +12,13 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const adminPasscode = new URL(request.url).searchParams.get("adminPasscode") ?? request.headers.get("x-admin-passcode") ?? "";
+    const techPasscode = request.headers.get("x-tech-passcode") ?? "";
     const adminCheck = verifyAdminPasscode(adminPasscode);
-    if (!adminCheck.ok) {
-      return Response.json({ error: adminCheck.message }, { status: 401 });
+    const techCheck = verifyTechPasscode(techPasscode);
+    const derekMatrixAccess = techCheck.ok && techCheck.kind === "tech" && techCheck.techName === "Derek Noll";
+
+    if (!adminCheck.ok && !derekMatrixAccess) {
+      return Response.json({ error: "Team matrix access is restricted." }, { status: 401 });
     }
 
     const submissions = await readSubmissions();
