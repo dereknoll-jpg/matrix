@@ -59,6 +59,7 @@ export default function Home() {
   const [quiz, setQuiz] = useState<QuizAnswers>({});
   const [submissions, setSubmissions] = useState<StoredSubmission[]>([]);
   const [matrixUnlocked, setMatrixUnlocked] = useState(false);
+  const [assessmentLocked, setAssessmentLocked] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [lastResult, setLastResult] = useState<SubmissionResult | null>(null);
@@ -111,7 +112,22 @@ export default function Home() {
       setAnswers({});
       setQuiz({});
       setLastResult(null);
-      setStatus(`Assessment unlocked for ${data.techName}.`);
+      setAssessmentLocked(false);
+
+      const resultResponse = await fetch("/api/my-result", {
+        cache: "no-store",
+        headers: { "x-tech-passcode": assessmentPasscode },
+      });
+      const resultData = await resultResponse.json();
+      if (!resultResponse.ok) throw new Error(resultData.error ?? "Could not check prior result.");
+
+      if (resultData.submission) {
+        setLastResult(resultData.submission.scores);
+        setAssessmentLocked(true);
+        setStatus(`Welcome back, ${data.techName}. Your assessment has already been submitted.`);
+      } else {
+        setStatus(`Assessment unlocked for ${data.techName}.`);
+      }
     } catch (unlockError) {
       setError(unlockError instanceof Error ? unlockError.message : "Could not unlock assessment.");
     }
@@ -173,9 +189,15 @@ export default function Home() {
         body: JSON.stringify({ techPasscode: assessmentPasscode, answers, quiz }),
       });
       const data = await response.json();
+      if (response.status === 409 && data.submission?.scores) {
+        setLastResult(data.submission.scores);
+        setAssessmentLocked(true);
+        throw new Error(data.error ?? "Assessment already submitted.");
+      }
       if (!response.ok) throw new Error(data.error ?? "Could not save assessment.");
 
       setLastResult(data.submission);
+      setAssessmentLocked(true);
       setStatus("Assessment saved. Thank you — your score is now included for the manager matrix.");
       if (matrixUnlocked) await loadSubmissions();
     } catch (saveError) {
@@ -198,14 +220,32 @@ export default function Home() {
 
     return (
       <main className="simple-access-main">
+        <div className="access-ambient one" />
+        <div className="access-ambient two" />
         <section className="simple-access-card">
-          <p className="eyebrow">Field Services IT</p>
-          <h1>{isAssessment ? "Take your skill assessment" : "View the team matrix"}</h1>
-          <p>
-            {isAssessment
-              ? "Enter your assigned technician passcode. The portal will identify you automatically."
-              : "Enter the manager passcode to unlock team results and scoring."}
-          </p>
+          <div className="access-brand-row">
+            <div className="access-logo">IT</div>
+            <div>
+              <p className="eyebrow">Field Services IT</p>
+              <strong>Skill Matrix Portal</strong>
+            </div>
+          </div>
+
+          <div className="access-hero-grid">
+            <div>
+              <h1>{isAssessment ? "Start your skill assessment." : "Unlock the team matrix."}</h1>
+              <p>
+                {isAssessment
+                  ? "Use your unique passcode to open your assessment. Your identity is matched automatically and each assessment can only be submitted once."
+                  : "Manager access shows aggregate scores, coverage gaps, submission status, and team strengths."}
+              </p>
+            </div>
+            <div className="access-mini-panel" aria-hidden="true">
+              <span>Coverage view</span>
+              <b>{techs.length}</b>
+              <small>technicians</small>
+            </div>
+          </div>
 
           <div className="simple-switch">
             <button onClick={() => setMode("assessment")} className={isAssessment ? "active" : ""}>
@@ -239,6 +279,21 @@ export default function Home() {
           <button className="simple-submit" onClick={isAssessment ? unlockAssessment : unlockMatrix}>
             {isAssessment ? "Start assessment" : "Unlock matrix"}
           </button>
+
+          <div className="access-proof-grid">
+            <div>
+              <b>Private by passcode</b>
+              <span>Techs see their own result only.</span>
+            </div>
+            <div>
+              <b>One submission</b>
+              <span>Results are locked after submit.</span>
+            </div>
+            <div>
+              <b>Manager matrix</b>
+              <span>Protected aggregate team view.</span>
+            </div>
+          </div>
 
           {status && <div className="notice">{status}</div>}
           {error && <div className="notice error">{error}</div>}
@@ -285,7 +340,38 @@ export default function Home() {
       {error && <div className="notice error">{error}</div>}
 
       {mode === "assessment" ? (
-        activeTech ? (
+        activeTech && assessmentLocked && lastResult ? (
+          <section className="result-only">
+            <div className="card result-card">
+              <p className="eyebrow">Assessment submitted</p>
+              <h2>{activeTech}, your result is recorded.</h2>
+              <div className="result-hero-number">
+                <span>Overall score</span>
+                <strong>{lastResult.overall.toFixed(1)}</strong>
+                <em>{lastResult.level}</em>
+              </div>
+              <div className="result-summary-grid">
+                <div>
+                  <span>Strengths</span>
+                  <p>{lastResult.strengths.join(", ")}</p>
+                </div>
+                <div>
+                  <span>Growth areas</span>
+                  <p>{lastResult.gaps.join(", ")}</p>
+                </div>
+              </div>
+              <div className="personal-score-list">
+                {lastResult.categoryScores.map((category) => (
+                  <div key={category.key}>
+                    <span>{category.label}</span>
+                    <b className={scoreClass(category.score)}>{category.score.toFixed(1)}</b>
+                  </div>
+                ))}
+              </div>
+              <p className="hint">This assessment is locked after submission. If you need a reset, contact the manager.</p>
+            </div>
+          </section>
+        ) : activeTech ? (
           <section className="assessment-grid">
             <aside className="sidebar-card">
               <h2>{activeTech}</h2>

@@ -7,6 +7,7 @@ export const techs = [
   "Cameron Densmore",
   "Nyasia Torres",
   "Tony Luo",
+  "Derek Noll",
 ] as const;
 
 export type TechName = (typeof techs)[number];

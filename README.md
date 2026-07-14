@@ -21,6 +21,7 @@ Web-based assessment portal for service desk / field services IT technicians.
 - Cameron Densmore
 - Nyasia Torres
 - Tony Luo
+- Derek Noll
 
 ## Vercel deployment
 
@@ -43,7 +44,8 @@ Without KV configured, the app still builds and runs, but submissions only use t
 ```json
 {
   "Dalton Tyler": "replace-with-passcode",
-  "Tim Kay": "replace-with-passcode"
+  "Tim Kay": "replace-with-passcode",
+  "Derek Noll": "replace-with-passcode"
 }
 ```
 
