@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import {
   categories,
   quizQuestions,
-  scoreAssessment,
   techs,
   type AssessmentAnswers,
   type QuizAnswers,
@@ -64,7 +63,6 @@ export default function Home() {
   const [lastResult, setLastResult] = useState<SubmissionResult | null>(null);
 
   const completion = useMemo(() => validateComplete(answers, quiz), [answers, quiz]);
-  const preview = useMemo(() => scoreAssessment(answers, quiz), [answers, quiz]);
   const totalItems = categories.reduce((sum, category) => sum + category.statements.length, 0) + quizQuestions.length;
   const completedItems = Object.keys(answers).filter((key) => answers[key]).length + Object.keys(quiz).length;
   const percentDone = Math.round((completedItems / totalItems) * 100);
@@ -350,23 +348,11 @@ export default function Home() {
                 </div>
                 <p>{completedItems} of {totalItems} items complete</p>
               </div>
-              <div className="score-preview">
-                <span>Current preview</span>
-                <strong>{Number.isFinite(preview.overall) ? preview.overall.toFixed(1) : "—"}</strong>
-                <p>{preview.level}</p>
-              </div>
               <button className="submit" onClick={submitAssessment}>Submit assessment</button>
               {!completion.complete && (
                 <p className="hint">
                   Missing {completion.missingStatements.length} self-ratings and {completion.missingQuiz.length} quiz answers.
                 </p>
-              )}
-              {lastResult && (
-                <div className="score-preview">
-                  <span>Submitted result</span>
-                  <strong>{lastResult.overall.toFixed(1)}</strong>
-                  <p>{lastResult.level}</p>
-                </div>
               )}
             </aside>
 

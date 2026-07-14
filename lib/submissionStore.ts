@@ -15,6 +15,49 @@ const memoryStore = globalThis as typeof globalThis & {
 
 const KV_KEY = "field-services-assessment-submissions";
 
+function isStoredSubmission(value: unknown): value is StoredSubmission {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Partial<StoredSubmission>;
+  return (
+    typeof item.techName === "string" &&
+    typeof item.overall === "number" &&
+    typeof item.level === "string" &&
+    typeof item.updatedAt === "string" &&
+    Boolean(item.scores)
+  );
+}
+
+export function normalizeSubmissions(value: unknown, depth = 0): StoredSubmission[] {
+  if (!value || depth > 3) return [];
+
+  if (typeof value === "string") {
+    try {
+      return normalizeSubmissions(JSON.parse(value), depth + 1);
+    } catch {
+      return [];
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter(isStoredSubmission);
+  }
+
+  if (typeof value === "object") {
+    const objectValue = value as Record<string, unknown>;
+    for (const key of ["submissions", "data", "result", "value"]) {
+      if (key in objectValue) {
+        const normalized = normalizeSubmissions(objectValue[key], depth + 1);
+        if (normalized.length) return normalized;
+      }
+    }
+
+    const values = Object.values(objectValue);
+    if (values.some(isStoredSubmission)) return values.filter(isStoredSubmission);
+  }
+
+  return [];
+}
+
 export function hasKv() {
   return Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 }
@@ -45,28 +88,24 @@ async function kvRequest(path: string, init?: RequestInit) {
 export async function readSubmissions(): Promise<StoredSubmission[]> {
   if (!hasKv()) {
     memoryStore.__assessmentSubmissions ??= [];
+    memoryStore.__assessmentSubmissions = normalizeSubmissions(memoryStore.__assessmentSubmissions);
     return memoryStore.__assessmentSubmissions;
   }
 
   const result = await kvRequest(`/get/${encodeURIComponent(KV_KEY)}`);
-  if (!result || typeof result !== "string") return [];
-
-  try {
-    return JSON.parse(result) as StoredSubmission[];
-  } catch {
-    return [];
-  }
+  return normalizeSubmissions(result);
 }
 
 export async function writeSubmissions(submissions: StoredSubmission[]) {
+  const normalized = normalizeSubmissions(submissions);
   if (!hasKv()) {
-    memoryStore.__assessmentSubmissions = submissions;
+    memoryStore.__assessmentSubmissions = normalized;
     return;
   }
 
   await kvRequest(`/set/${encodeURIComponent(KV_KEY)}`, {
     method: "POST",
-    body: JSON.stringify(JSON.stringify(submissions)),
+    body: JSON.stringify(JSON.stringify(normalized)),
     headers: {
       "Content-Type": "application/json",
     },

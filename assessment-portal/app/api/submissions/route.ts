@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
     const submissions = await readSubmissions();
     return Response.json({
-      submissions: submissions.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+      submissions: [...submissions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
       storage: hasKv() ? "vercel-kv" : "memory",
     });
   } catch (error) {
