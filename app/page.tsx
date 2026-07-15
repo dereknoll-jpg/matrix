@@ -106,6 +106,9 @@ export default function Home() {
     const readyCount = scoredTechs.filter((item) => item.score >= 4).length;
     const watchCount = scoredTechs.filter((item) => item.score >= 3.5 && item.score < 4).length;
     const focusCount = scoredTechs.filter((item) => item.score < 3.5).length;
+    const lowestScore = scoredTechs.length ? scoredTechs[scoredTechs.length - 1].score : 0;
+    const highestScore = scoredTechs.length ? scoredTechs[0].score : 0;
+    const spread = scoredTechs.length ? Math.round((highestScore - lowestScore) * 10) / 10 : 0;
     const priority = average ? Math.round(((5 - average) + candidates.length * 0.18 + (readyCount < 2 ? 0.35 : 0)) * 100) / 100 : 0;
 
     return {
@@ -116,18 +119,22 @@ export default function Home() {
       readyCount,
       watchCount,
       focusCount,
+      spread,
       priority,
-      recommendation: candidates.length
-        ? `Pair ${candidates.map((item) => item.techName.split(" ")[0]).join(", ")} with ${leads[0]?.techName ?? "a category lead"}.`
-        : readyCount >= 2
-          ? "Maintain coverage with rotation and knowledge sharing."
-          : "Build at least two dependable backups for this area.",
+      opportunity:
+        focusCount > 0 || readyCount < 2
+          ? "High cross-training value"
+          : spread >= 0.8
+            ? "Target consistency"
+            : watchCount > readyCount
+              ? "Build bench depth"
+              : "Maintain coverage",
     };
   });
   const submittedCategoryReports = categoryReports.filter((category) => category.average > 0);
   const strongestCategory = [...submittedCategoryReports].sort((a, b) => b.average - a.average)[0];
   const weakestCategory = [...submittedCategoryReports].sort((a, b) => a.average - b.average)[0];
-  const gapPriorities = [...submittedCategoryReports].sort((a, b) => b.priority - a.priority).slice(0, 5);
+  const crossTrainingOpportunities = [...submittedCategoryReports].sort((a, b) => b.priority - a.priority);
   const mostBalanced = submittedTechs
     .map((submission) => {
       const scores = submission.scores.categoryScores.map((category) => category.score);
@@ -147,19 +154,43 @@ export default function Home() {
       }))
     )
     .sort((a, b) => b.score - a.score)[0];
+  const overallScores = submittedTechs.map((submission) => submission.overall);
+  const teamPointSpread = overallScores.length
+    ? Math.round((Math.max(...overallScores) - Math.min(...overallScores)) * 10) / 10
+    : 0;
+  const averagePointSpread = submittedTechs.length
+    ? Math.round(
+        (submittedTechs.reduce((sum, submission) => {
+          const scores = submission.scores.categoryScores.map((category) => category.score);
+          return sum + (scores.length ? Math.max(...scores) - Math.min(...scores) : 0);
+        }, 0) /
+          submittedTechs.length) *
+          10
+      ) / 10
+    : 0;
+  const coverageDepth = submittedCategoryReports.filter((category) => category.readyCount >= 2).length;
+  const trainingFocusCount = submittedCategoryReports.filter((category) => category.focusCount > 0 || category.readyCount < 2).length;
   const scorecards = submittedTechs
     .map((submission) => {
       const sortedScores = [...submission.scores.categoryScores].sort((a, b) => b.score - a.score);
       const primaryGap = sortedScores[sortedScores.length - 1];
-      const gapLead = categoryReports.find((category) => category.key === primaryGap?.key)?.leads[0];
+      const scores = sortedScores.map((category) => category.score);
+      const spread = scores.length ? Math.round((Math.max(...scores) - Math.min(...scores)) * 10) / 10 : 0;
+      const primaryGapLabel = primaryGap ? categories.find((category) => category.key === primaryGap.key)?.shortLabel ?? primaryGap.label : "readiness";
+      const focusAction = primaryGap
+        ? submission.overall >= 4.3
+          ? `Share one ${primaryGapLabel} workflow or checklist with the team.`
+          : primaryGap.score < 3.75
+            ? `Co-work two ${primaryGapLabel} tickets and capture the repeatable steps.`
+            : spread >= 0.8
+              ? `Take one more ${primaryGapLabel} case to balance the profile.`
+              : `Document one practical ${primaryGapLabel} troubleshooting pattern.`
+        : "Maintain balanced readiness across categories.";
       return {
         submission,
         sortedScores,
         primaryGap,
-        goal: primaryGap
-          ? `Next goal: strengthen ${categories.find((category) => category.key === primaryGap.key)?.shortLabel ?? primaryGap.label} through shadowing, ticket review, and one documented win.`
-          : "Next goal: maintain balanced readiness.",
-        pairing: primaryGap && gapLead ? `Suggested pairing: ${gapLead.techName}` : "Suggested pairing: rotate with a category lead.",
+        focusAction,
       };
     })
     .sort((a, b) => b.submission.overall - a.submission.overall);
@@ -384,7 +415,7 @@ export default function Home() {
           <div>
             <p className="eyebrow">Derek access</p>
             <h2>Team assessment matrix</h2>
-            <span>Review team submissions, category averages, and readiness gaps.</span>
+            <span>Review submissions, readiness trends, cross-training opportunities, and scorecards.</span>
           </div>
           <nav className="portal-tabs" aria-label="Derek portal navigation">
             <button onClick={() => setMode("assessment")} className={mode === "assessment" ? "active" : ""}>
@@ -624,29 +655,7 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="coverage-grid">
-            <div className="card">
-              <div className="section-title">
-                <p className="eyebrow">Coverage</p>
-                <h2>Category averages</h2>
-              </div>
-              <div className="coverage-list">
-                {categoryAverages.map((category) => (
-                  <div key={category.key} className="coverage-row">
-                    <div>
-                      <strong>{category.label}</strong>
-                      <span>Lead: {category.lead?.score ? `${category.lead.techName} (${category.lead.score.toFixed(1)})` : "No data"}</span>
-                    </div>
-                    <div className="coverage-meter">
-                      <span style={{ width: `${Math.max(category.average, 0) * 20}%` }} />
-                    </div>
-                    <b className={scoreClass(category.average || 0)}>{category.average ? category.average.toFixed(1) : "—"}</b>
-                    <em>{category.risk}</em>
-                  </div>
-                ))}
-              </div>
-            </div>
-
+          <section className="coverage-grid roster-grid">
             <div className="card">
               <div className="section-title">
                 <p className="eyebrow">Roster</p>
@@ -667,7 +676,7 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="report-grid">
+          <section className="report-grid summary-only">
             <div className="card report-card">
               <div className="section-title">
                 <p className="eyebrow">Readiness summary</p>
@@ -695,25 +704,26 @@ export default function Home() {
                   <strong>{topSpecialist?.techName ?? "—"}</strong>
                   <p>{topSpecialist ? `${topSpecialist.category} (${topSpecialist.score.toFixed(1)})` : "Waiting for submissions"}</p>
                 </div>
-              </div>
-            </div>
-
-            <div className="card report-card">
-              <div className="section-title">
-                <p className="eyebrow">Action planning</p>
-                <h2>Team gap priority</h2>
-              </div>
-              <div className="priority-list">
-                {gapPriorities.map((category, index) => (
-                  <div key={category.key} className="priority-row">
-                    <b>{index + 1}</b>
-                    <div>
-                      <strong>{category.label}</strong>
-                      <span>{category.candidates.length ? `${category.candidates.length} cross-training candidate(s)` : "Coverage looks stable"}</span>
-                    </div>
-                    <em>{category.average.toFixed(1)}</em>
-                  </div>
-                ))}
+                <div>
+                  <span>Team point spread</span>
+                  <strong>{submittedTechs.length ? teamPointSpread.toFixed(1) : "—"}</strong>
+                  <p>Highest to lowest overall score</p>
+                </div>
+                <div>
+                  <span>Avg individual spread</span>
+                  <strong>{submittedTechs.length ? averagePointSpread.toFixed(1) : "—"}</strong>
+                  <p>Typical range between strengths and gaps</p>
+                </div>
+                <div>
+                  <span>Coverage depth</span>
+                  <strong>{submittedCategoryReports.length ? `${coverageDepth}/${submittedCategoryReports.length}` : "—"}</strong>
+                  <p>Categories with at least two 4.0+ scores</p>
+                </div>
+                <div>
+                  <span>Training focus</span>
+                  <strong>{submittedCategoryReports.length ? trainingFocusCount : "—"}</strong>
+                  <p>Categories needing bench depth or consistency</p>
+                </div>
               </div>
             </div>
           </section>
@@ -721,36 +731,38 @@ export default function Home() {
           <section className="card report-card">
             <div className="section-title">
               <p className="eyebrow">Cross-training</p>
-              <h2>Recommended pairings</h2>
-              <p>Use this to turn lower category scores into specific mentoring or shadowing plans.</p>
+              <h2>Opportunity map</h2>
+              <p>Category-level view of where cross-training creates the most team value.</p>
             </div>
-            <div className="cross-training-grid">
-              {categoryReports.map((category) => (
-                <article key={category.key} className="training-card">
+            <div className="opportunity-map">
+              {crossTrainingOpportunities.map((category) => (
+                <article key={category.key} className="opportunity-row">
                   <div>
-                    <h3>{category.shortLabel}</h3>
-                    <p>{category.recommendation}</p>
+                    <strong>{category.label}</strong>
+                    <span>{category.opportunity}</span>
                   </div>
-                  <div className="training-meta">
-                    <span>Leads</span>
-                    <strong>{category.leads.map((item) => item.techName).join(", ") || "Needs lead"}</strong>
+                  <div className="opportunity-bars" aria-label={`${category.label} readiness distribution`}>
+                    <span className="ready" style={{ width: `${submittedTechs.length ? (category.readyCount / submittedTechs.length) * 100 : 0}%` }} />
+                    <span className="watch" style={{ width: `${submittedTechs.length ? (category.watchCount / submittedTechs.length) * 100 : 0}%` }} />
+                    <span className="focus" style={{ width: `${submittedTechs.length ? (category.focusCount / submittedTechs.length) * 100 : 0}%` }} />
                   </div>
-                  <div className="training-meta">
-                    <span>Candidates</span>
-                    <strong>{category.candidates.map((item) => `${item.techName} (${item.score.toFixed(1)})`).join(", ") || "None"}</strong>
+                  <div className="opportunity-stats">
+                    <span>Avg {category.average.toFixed(1)}</span>
+                    <span>Spread {category.spread.toFixed(1)}</span>
+                    <span>{category.readyCount} ready</span>
                   </div>
                 </article>
               ))}
-            </div>
+              </div>
           </section>
 
           <section className="card report-card">
             <div className="section-title">
               <p className="eyebrow">Individual scorecards</p>
-              <h2>Strengths, gaps, and next goals</h2>
+              <h2>Strengths, gaps, and one focus action</h2>
             </div>
             <div className="scorecard-grid">
-              {scorecards.map(({ submission, sortedScores, primaryGap, goal, pairing }) => (
+              {scorecards.map(({ submission, sortedScores, primaryGap, focusAction }) => (
                 <article className="agent-scorecard" key={submission.techName}>
                   <div className="agent-scorecard-header">
                     <div>
@@ -773,8 +785,7 @@ export default function Home() {
                   <div className="scorecard-notes">
                     <p><b>Strength:</b> {sortedScores[0]?.label ?? "—"}</p>
                     <p><b>Focus:</b> {primaryGap?.label ?? "—"}</p>
-                    <p>{pairing}</p>
-                    <p>{goal}</p>
+                    <p><b>Action:</b> {focusAction}</p>
                   </div>
                 </article>
               ))}

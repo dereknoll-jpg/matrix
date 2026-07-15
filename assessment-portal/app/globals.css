@@ -864,6 +864,11 @@ td.score {
   gap: 20px;
 }
 
+.coverage-grid.roster-grid,
+.report-grid.summary-only {
+  grid-template-columns: 1fr;
+}
+
 .coverage-row {
   display: grid;
   grid-template-columns: minmax(240px, 1fr) minmax(120px, 240px) 58px 82px;
@@ -1328,6 +1333,78 @@ td {
   gap: 10px;
 }
 
+.opportunity-map {
+  display: grid;
+  gap: 12px;
+}
+
+.opportunity-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1.2fr) minmax(220px, 0.9fr);
+  gap: 16px;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 14px;
+}
+
+.opportunity-row strong {
+  display: block;
+  color: #061529;
+  letter-spacing: -0.02em;
+}
+
+.opportunity-row > div:first-child span {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.opportunity-bars {
+  display: flex;
+  height: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.opportunity-bars span {
+  display: block;
+  min-width: 3px;
+}
+
+.opportunity-bars .ready {
+  background: linear-gradient(90deg, #16a34a, #86efac);
+}
+
+.opportunity-bars .watch {
+  background: linear-gradient(90deg, #38bdf8, #bfdbfe);
+}
+
+.opportunity-bars .focus {
+  background: linear-gradient(90deg, #f59e0b, #fde68a);
+}
+
+.opportunity-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.opportunity-stats span {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.86);
+  color: #334155;
+  padding: 6px 9px;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
 .priority-row {
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr) 54px;
@@ -1535,8 +1612,13 @@ td {
 
   .summary-grid,
   .cross-training-grid,
-  .scorecard-grid {
+  .scorecard-grid,
+  .opportunity-row {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .opportunity-row > div:first-child {
+    grid-column: 1 / -1;
   }
 }
 
@@ -1570,8 +1652,17 @@ td {
   .summary-grid,
   .cross-training-grid,
   .scorecard-grid,
+  .opportunity-row,
   .calibration-list div {
     grid-template-columns: 1fr;
+  }
+
+  .opportunity-row > div:first-child {
+    grid-column: auto;
+  }
+
+  .opportunity-stats {
+    justify-content: flex-start;
   }
 
   .section-title.split {
