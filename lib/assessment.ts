@@ -43,6 +43,9 @@ export type SubmissionResult = {
   gaps: string[];
 };
 
+export const SELF_ASSESSMENT_WEIGHT = 0.6;
+export const QUIZ_WEIGHT = 0.4;
+
 export const categories: {
   key: CategoryKey;
   label: string;
@@ -364,6 +367,35 @@ export function levelForScore(score: number) {
   return "Novice";
 }
 
+function blendedCategoryScore(selfAverage: number, quizPercent: number | null) {
+  const quizScore = quizPercent === null ? selfAverage : (quizPercent / 100) * 5;
+  return Math.round((selfAverage * SELF_ASSESSMENT_WEIGHT + quizScore * QUIZ_WEIGHT) * 10) / 10;
+}
+
+export function rebalanceResult(result: SubmissionResult): SubmissionResult {
+  const categoryScores = result.categoryScores.map((category) => {
+    const score = blendedCategoryScore(category.selfAverage, category.quizPercent);
+    return {
+      ...category,
+      score,
+      level: levelForScore(score),
+    };
+  });
+
+  const overall = Math.round(
+    (categoryScores.reduce((sum, item) => sum + item.score, 0) / categoryScores.length) * 10
+  ) / 10;
+  const sorted = [...categoryScores].sort((a, b) => b.score - a.score);
+
+  return {
+    categoryScores,
+    overall,
+    level: levelForScore(overall),
+    strengths: sorted.slice(0, 2).map((item) => item.label),
+    gaps: sorted.slice(-2).reverse().map((item) => item.label),
+  };
+}
+
 export function scoreAssessment(answers: AssessmentAnswers, quiz: QuizAnswers): SubmissionResult {
   const categoryScores = categories.map((category) => {
     const selfScores = category.statements.map((statement) => Number(answers[statement.id] ?? 0)).filter(Boolean);
@@ -375,15 +407,16 @@ export function scoreAssessment(answers: AssessmentAnswers, quiz: QuizAnswers): 
     const answeredQuiz = categoryQuiz.filter((question) => quiz[question.id] !== undefined);
     const correct = answeredQuiz.filter((question) => quiz[question.id] === question.correctIndex).length;
     const quizPercent = categoryQuiz.length ? correct / categoryQuiz.length : null;
-    const quizScore = quizPercent === null ? selfAverage : quizPercent * 5;
-    const score = Math.round((selfAverage * 0.7 + quizScore * 0.3) * 10) / 10;
+    const roundedSelfAverage = Math.round(selfAverage * 10) / 10;
+    const roundedQuizPercent = quizPercent === null ? null : Math.round(quizPercent * 100);
+    const score = blendedCategoryScore(roundedSelfAverage, roundedQuizPercent);
 
     return {
       key: category.key,
       label: category.label,
       score,
-      selfAverage: Math.round(selfAverage * 10) / 10,
-      quizPercent: quizPercent === null ? null : Math.round(quizPercent * 100),
+      selfAverage: roundedSelfAverage,
+      quizPercent: roundedQuizPercent,
       level: levelForScore(score),
     };
   });

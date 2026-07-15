@@ -1,4 +1,4 @@
-import type { SubmissionResult } from "./assessment";
+import { rebalanceResult, type SubmissionResult } from "./assessment";
 
 export type StoredSubmission = {
   id: number;
@@ -27,6 +27,16 @@ function isStoredSubmission(value: unknown): value is StoredSubmission {
   );
 }
 
+function normalizeStoredSubmission(submission: StoredSubmission): StoredSubmission {
+  const scores = rebalanceResult(submission.scores);
+  return {
+    ...submission,
+    overall: scores.overall,
+    level: scores.level,
+    scores,
+  };
+}
+
 export function normalizeSubmissions(value: unknown, depth = 0): StoredSubmission[] {
   if (!value || depth > 3) return [];
 
@@ -39,7 +49,7 @@ export function normalizeSubmissions(value: unknown, depth = 0): StoredSubmissio
   }
 
   if (Array.isArray(value)) {
-    return value.filter(isStoredSubmission);
+    return value.filter(isStoredSubmission).map(normalizeStoredSubmission);
   }
 
   if (typeof value === "object") {
@@ -52,7 +62,7 @@ export function normalizeSubmissions(value: unknown, depth = 0): StoredSubmissio
     }
 
     const values = Object.values(objectValue);
-    if (values.some(isStoredSubmission)) return values.filter(isStoredSubmission);
+    if (values.some(isStoredSubmission)) return values.filter(isStoredSubmission).map(normalizeStoredSubmission);
   }
 
   return [];

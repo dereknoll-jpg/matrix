@@ -1271,11 +1271,257 @@ td {
   color: #7f8ea3;
 }
 
+.report-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 20px;
+}
+
+.report-card {
+  overflow: hidden;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.summary-grid div {
+  min-height: 134px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 90% 12%, rgba(45, 212, 191, 0.14), transparent 7rem),
+    rgba(255, 255, 255, 0.78);
+  padding: 16px;
+}
+
+.summary-grid span,
+.training-meta span,
+.calibration-list span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.summary-grid strong {
+  display: block;
+  margin-top: 10px;
+  color: #061529;
+  font-size: clamp(1.25rem, 2.2vw, 2rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.summary-grid p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.priority-list,
+.calibration-list {
+  display: grid;
+  gap: 10px;
+}
+
+.priority-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 54px;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  padding: 12px;
+}
+
+.priority-row > b {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #071224, #0f766e);
+  color: white;
+}
+
+.priority-row strong,
+.training-card h3,
+.agent-scorecard h3,
+.calibration-list strong {
+  color: #061529;
+}
+
+.priority-row span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.priority-row em {
+  justify-self: end;
+  color: #0f766e;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.cross-training-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.training-card,
+.agent-scorecard,
+.calibration-list div {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 16px;
+}
+
+.training-card {
+  display: grid;
+  gap: 14px;
+}
+
+.training-card h3 {
+  margin: 0 0 6px;
+  letter-spacing: -0.03em;
+}
+
+.training-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.training-meta strong {
+  display: block;
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+.scorecard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.agent-scorecard {
+  display: grid;
+  gap: 16px;
+}
+
+.agent-scorecard-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: start;
+}
+
+.agent-scorecard h3 {
+  margin: 0;
+  letter-spacing: -0.035em;
+}
+
+.agent-scorecard-header span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.agent-scorecard-header > strong {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #dcfce7, #ccfbf1);
+  color: #14532d;
+  font-size: 1.45rem;
+}
+
+.mini-skill-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mini-skill-list div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 34px;
+  gap: 10px;
+  align-items: center;
+}
+
+.mini-skill-list span {
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.mini-skill-list b {
+  color: #0f766e;
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.mini-skill-meter {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+}
+
+.mini-skill-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #38bdf8, #2dd4bf);
+}
+
+.scorecard-notes {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.scorecard-notes p {
+  margin: 0;
+}
+
+.scorecard-notes b {
+  color: #061529;
+}
+
+.calibration-list div {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.calibration-list span {
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
 @media (max-width: 1120px) {
   .hero,
   .assessment-grid,
   .coverage-grid,
-  .personal-result {
+  .personal-result,
+  .report-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1284,6 +1530,12 @@ td {
   }
 
   .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-grid,
+  .cross-training-grid,
+  .scorecard-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -1312,6 +1564,13 @@ td {
   }
 
   .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid,
+  .cross-training-grid,
+  .scorecard-grid,
+  .calibration-list div {
     grid-template-columns: 1fr;
   }
 
