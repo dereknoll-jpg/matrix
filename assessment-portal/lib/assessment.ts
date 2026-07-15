@@ -7,10 +7,16 @@ export const techs = [
   "Cameron Densmore",
   "Nyasia Torres",
   "Tony Luo",
-  "Derek Noll",
 ] as const;
 
+export const matrixManagers = ["Derek Noll"] as const;
+
 export type TechName = (typeof techs)[number];
+export type MatrixManagerName = (typeof matrixManagers)[number];
+
+export function isAssessmentTechName(value: string): value is TechName {
+  return (techs as readonly string[]).includes(value);
+}
 
 export type CategoryKey =
   | "pc"

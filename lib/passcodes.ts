@@ -1,9 +1,13 @@
-import { techs, type TechName } from "./assessment";
+import { matrixManagers, techs, type MatrixManagerName, type TechName } from "./assessment";
 
 export type PasscodeCheck =
   | { ok: true; kind: "admin" }
   | { ok: true; kind: "tech"; techName: TechName }
+  | { ok: true; kind: "matrix-manager"; techName: MatrixManagerName }
   | { ok: false; message: string };
+
+type PasscodeOwner = TechName | MatrixManagerName;
+const passcodeOwners = [...techs, ...matrixManagers] as const;
 
 function clean(value: unknown) {
   return String(value ?? "").trim();
@@ -13,17 +17,17 @@ export function getAdminPasscode() {
   return clean(process.env.ADMIN_MATRIX_PASSCODE);
 }
 
-export function getTechPasscodes(): Record<TechName, string> {
+export function getTechPasscodes(): Record<PasscodeOwner, string> {
   const raw = process.env.TECH_PASSCODES_JSON;
-  if (!raw) return {} as Record<TechName, string>;
+  if (!raw) return {} as Record<PasscodeOwner, string>;
 
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     return Object.fromEntries(
-      techs.map((tech) => [tech, clean(parsed[tech])])
-    ) as Record<TechName, string>;
+      passcodeOwners.map((owner) => [owner, clean(parsed[owner])])
+    ) as Record<PasscodeOwner, string>;
   } catch {
-    return {} as Record<TechName, string>;
+    return {} as Record<PasscodeOwner, string>;
   }
 }
 
@@ -45,11 +49,15 @@ export function verifyTechPasscode(passcode: string): PasscodeCheck {
     return { ok: false, message: "Technician passcodes are not configured." };
   }
 
-  const match = techs.find((tech) => passcodes[tech] === candidate);
-  if (!match) {
-    return { ok: false, message: "Invalid technician passcode." };
+  const techMatch = techs.find((tech) => passcodes[tech] === candidate);
+  if (techMatch) {
+    return { ok: true, kind: "tech", techName: techMatch };
   }
 
-  return { ok: true, kind: "tech", techName: match };
-}
+  const managerMatch = matrixManagers.find((manager) => passcodes[manager] === candidate);
+  if (managerMatch) {
+    return { ok: true, kind: "matrix-manager", techName: managerMatch };
+  }
 
+  return { ok: false, message: "Invalid technician passcode." };
+}

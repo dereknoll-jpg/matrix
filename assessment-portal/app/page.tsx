@@ -215,6 +215,21 @@ export default function Home() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Invalid technician passcode.");
 
+      if (data.manager) {
+        setActiveTech(data.techName);
+        setAnswers({});
+        setQuiz({});
+        setLastResult(null);
+        setAssessmentLocked(true);
+        const loaded = await loadSubmissions({ techPasscode: assessmentPasscode });
+        if (loaded) {
+          setMatrixUnlocked(true);
+          setMode("matrix");
+          setStatus("Team matrix unlocked.");
+        }
+        return;
+      }
+
       setActiveTech(data.techName);
       setAnswers({});
       setQuiz({});
@@ -392,9 +407,6 @@ export default function Home() {
             <span>Review submissions, readiness trends, cross-training opportunities, and scorecards.</span>
           </div>
           <nav className="portal-tabs" aria-label="Derek portal navigation">
-            <button onClick={() => setMode("assessment")} className={mode === "assessment" ? "active" : ""}>
-              My assessment
-            </button>
             <button onClick={unlockDerekMatrix} className={mode === "matrix" ? "active" : ""}>
               View team matrix
             </button>

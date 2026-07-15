@@ -21,6 +21,16 @@ export async function POST(request: Request) {
   if (!result.ok) {
     return Response.json({ error: result.message }, { status: 401 });
   }
+
+  if (result.kind === "matrix-manager") {
+    return Response.json({
+      ok: true,
+      purpose: "matrix",
+      techName: result.techName,
+      manager: true,
+    });
+  }
+
   if (result.kind !== "tech") {
     return Response.json({ error: "Invalid technician passcode." }, { status: 401 });
   }

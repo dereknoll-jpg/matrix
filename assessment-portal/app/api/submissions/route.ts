@@ -1,4 +1,5 @@
 import {
+  isAssessmentTechName,
   scoreAssessment,
   validateComplete,
   type AssessmentAnswers,
@@ -15,13 +16,13 @@ export async function GET(request: Request) {
     const techPasscode = request.headers.get("x-tech-passcode") ?? "";
     const adminCheck = verifyAdminPasscode(adminPasscode);
     const techCheck = verifyTechPasscode(techPasscode);
-    const derekMatrixAccess = techCheck.ok && techCheck.kind === "tech" && techCheck.techName === "Derek Noll";
+    const derekMatrixAccess = techCheck.ok && techCheck.kind === "matrix-manager" && techCheck.techName === "Derek Noll";
 
     if (!adminCheck.ok && !derekMatrixAccess) {
       return Response.json({ error: "Team matrix access is restricted." }, { status: 401 });
     }
 
-    const submissions = await readSubmissions();
+    const submissions = (await readSubmissions()).filter((submission) => isAssessmentTechName(submission.techName));
     return Response.json({
       submissions: [...submissions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
       storage: hasKv() ? "vercel-kv" : "memory",
@@ -85,6 +86,40 @@ export async function POST(request: Request) {
     submissions.push(storedSubmission);
     await writeSubmissions(submissions);
     return Response.json({ submission: { techName, ...result }, storage: hasKv() ? "vercel-kv" : "memory" }, { status: 201 });
+  } catch (error) {
+    return Response.json({ error: submissionRouteError(error) }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const adminPasscode = request.headers.get("x-admin-passcode") ?? "";
+    const techPasscode = request.headers.get("x-tech-passcode") ?? "";
+    const adminCheck = verifyAdminPasscode(adminPasscode);
+    const techCheck = verifyTechPasscode(techPasscode);
+    const derekMatrixAccess = techCheck.ok && techCheck.kind === "matrix-manager" && techCheck.techName === "Derek Noll";
+
+    if (!adminCheck.ok && !derekMatrixAccess) {
+      return Response.json({ error: "Team matrix access is restricted." }, { status: 401 });
+    }
+
+    const payload = (await request.json()) as { techName?: string };
+    const techName = payload.techName ?? "";
+    if (!isAssessmentTechName(techName)) {
+      return Response.json({ error: "Invalid technician name." }, { status: 400 });
+    }
+
+    const submissions = await readSubmissions();
+    const remaining = submissions.filter((submission) => submission.techName !== techName);
+    const removed = submissions.length - remaining.length;
+    await writeSubmissions(remaining);
+
+    return Response.json({
+      ok: true,
+      removed,
+      techName,
+      storage: hasKv() ? "vercel-kv" : "memory",
+    });
   } catch (error) {
     return Response.json({ error: submissionRouteError(error) }, { status: 500 });
   }
