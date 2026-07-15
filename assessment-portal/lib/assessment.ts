@@ -43,8 +43,8 @@ export type SubmissionResult = {
   gaps: string[];
 };
 
-export const SELF_ASSESSMENT_WEIGHT = 0.6;
-export const QUIZ_WEIGHT = 0.4;
+export const SELF_ASSESSMENT_WEIGHT = 0.8;
+export const QUIZ_WEIGHT = 0.2;
 
 export const categories: {
   key: CategoryKey;

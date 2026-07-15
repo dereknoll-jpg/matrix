@@ -559,7 +559,7 @@ export default function Home() {
             <div className="kpi">
               <span>Team average</span>
               <strong>{submissions.length ? averageOverall.toFixed(1) : "—"}</strong>
-              <p>{submissions.length ? "60/40 blended score out of 5" : "No submissions yet"}</p>
+              <p>{submissions.length ? "80/20 blended score out of 5" : "No submissions yet"}</p>
             </div>
             <div className="kpi">
               <span>Biggest gap</span>
@@ -578,7 +578,7 @@ export default function Home() {
               <div>
                 <p className="eyebrow">Manager view</p>
                 <h2>Team scoring matrix</h2>
-                <p>Scores blend 60% self-assessment and 40% scenario quiz performance. Blank rows mean that tech has not submitted yet.</p>
+                <p>Scores blend 80% self-assessment and 20% scenario quiz performance. Blank rows mean that tech has not submitted yet.</p>
               </div>
               <button className="secondary" onClick={() => loadSubmissions({ techPasscode: assessmentPasscode })}>Refresh results</button>
             </div>
@@ -672,7 +672,7 @@ export default function Home() {
               <div className="section-title">
                 <p className="eyebrow">Readiness summary</p>
                 <h2>Team direction</h2>
-                <p>Scoring now uses a 60% self-assessment and 40% scenario quiz blend.</p>
+                <p>Scoring now uses an 80% self-assessment and 20% scenario quiz blend.</p>
               </div>
               <div className="summary-grid">
                 <div>
