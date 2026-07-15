@@ -16,9 +16,9 @@ export async function GET(request: Request) {
     const techPasscode = request.headers.get("x-tech-passcode") ?? "";
     const adminCheck = verifyAdminPasscode(adminPasscode);
     const techCheck = verifyTechPasscode(techPasscode);
-    const derekMatrixAccess = techCheck.ok && techCheck.kind === "matrix-manager" && techCheck.techName === "Derek Noll";
+    const managerMatrixAccess = techCheck.ok && techCheck.kind === "matrix-manager";
 
-    if (!adminCheck.ok && !derekMatrixAccess) {
+    if (!adminCheck.ok && !managerMatrixAccess) {
       return Response.json({ error: "Team matrix access is restricted." }, { status: 401 });
     }
 
@@ -97,9 +97,9 @@ export async function DELETE(request: Request) {
     const techPasscode = request.headers.get("x-tech-passcode") ?? "";
     const adminCheck = verifyAdminPasscode(adminPasscode);
     const techCheck = verifyTechPasscode(techPasscode);
-    const derekMatrixAccess = techCheck.ok && techCheck.kind === "matrix-manager" && techCheck.techName === "Derek Noll";
+    const managerMatrixAccess = techCheck.ok && techCheck.kind === "matrix-manager";
 
-    if (!adminCheck.ok && !derekMatrixAccess) {
+    if (!adminCheck.ok && !managerMatrixAccess) {
       return Response.json({ error: "Team matrix access is restricted." }, { status: 401 });
     }
 

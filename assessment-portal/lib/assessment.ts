@@ -9,7 +9,7 @@ export const techs = [
   "Tony Luo",
 ] as const;
 
-export const matrixManagers = ["Derek Noll"] as const;
+export const matrixManagers = ["Derek Noll", "Krithiga"] as const;
 
 export type TechName = (typeof techs)[number];
 export type MatrixManagerName = (typeof matrixManagers)[number];

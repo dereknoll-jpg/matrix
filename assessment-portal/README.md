@@ -22,7 +22,7 @@ Web-based assessment portal for service desk / field services IT technicians.
 - Nyasia Torres
 - Tony Luo
 
-Derek Noll is manager-only access for the team matrix and is not included as a survey row.
+Derek Noll and Krithiga are manager-only access for the team matrix and are not included as survey rows.
 
 ## Vercel deployment
 
@@ -46,7 +46,8 @@ Without KV configured, the app still builds and runs, but submissions only use t
 {
   "Dalton Tyler": "replace-with-passcode",
   "Tim Kay": "replace-with-passcode",
-  "Derek Noll": "replace-with-manager-passcode"
+  "Derek Noll": "replace-with-manager-passcode",
+  "Krithiga": "replace-with-manager-passcode"
 }
 ```
 

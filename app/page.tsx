@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   categories,
+  matrixManagers,
   quizQuestions,
   techs,
   type AssessmentAnswers,
@@ -192,7 +193,7 @@ export default function Home() {
           : "Not enough quiz data for calibration.",
       };
     });
-  const canViewMatrix = activeTech === "Derek Noll";
+  const canViewMatrix = matrixManagers.includes(activeTech as (typeof matrixManagers)[number]);
   const heroKicker = mode === "assessment" ? "Assessment" : "Team matrix";
   const heroTitle = mode === "assessment" ? "Field Services North Assessment" : "Field Services North Matrix";
   const heroSubtitle =
@@ -255,7 +256,7 @@ export default function Home() {
     }
   }
 
-  async function unlockDerekMatrix() {
+  async function unlockManagerMatrix() {
     setError("");
     setStatus("");
 
@@ -400,14 +401,14 @@ export default function Home() {
       {error && <div className="notice error">{error}</div>}
 
       {canViewMatrix && (
-        <section className="manager-access-card" aria-label="Derek manager access">
+        <section className="manager-access-card" aria-label="Manager access">
           <div>
-            <p className="eyebrow">Derek access</p>
+            <p className="eyebrow">Manager access</p>
             <h2>Team assessment matrix</h2>
             <span>Review submissions, readiness trends, cross-training opportunities, and scorecards.</span>
           </div>
-          <nav className="portal-tabs" aria-label="Derek portal navigation">
-            <button onClick={unlockDerekMatrix} className={mode === "matrix" ? "active" : ""}>
+          <nav className="portal-tabs" aria-label="Manager portal navigation">
+            <button onClick={unlockManagerMatrix} className={mode === "matrix" ? "active" : ""}>
               View team matrix
             </button>
           </nav>
