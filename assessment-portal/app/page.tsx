@@ -36,19 +36,6 @@ function scoreClass(score: number) {
   return "score risk";
 }
 
-function shortDate(value: string) {
-  try {
-    return new Intl.DateTimeFormat("en", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(new Date(value));
-  } catch {
-    return value;
-  }
-}
-
 export default function Home() {
   const [mode, setMode] = useState<"assessment" | "matrix">("assessment");
   const [assessmentPasscode, setAssessmentPasscode] = useState("");
@@ -174,23 +161,10 @@ export default function Home() {
     .map((submission) => {
       const sortedScores = [...submission.scores.categoryScores].sort((a, b) => b.score - a.score);
       const primaryGap = sortedScores[sortedScores.length - 1];
-      const scores = sortedScores.map((category) => category.score);
-      const spread = scores.length ? Math.round((Math.max(...scores) - Math.min(...scores)) * 10) / 10 : 0;
-      const primaryGapLabel = primaryGap ? categories.find((category) => category.key === primaryGap.key)?.shortLabel ?? primaryGap.label : "readiness";
-      const focusAction = primaryGap
-        ? submission.overall >= 4.3
-          ? `Share one ${primaryGapLabel} workflow or checklist with the team.`
-          : primaryGap.score < 3.75
-            ? `Co-work two ${primaryGapLabel} tickets and capture the repeatable steps.`
-            : spread >= 0.8
-              ? `Take one more ${primaryGapLabel} case to balance the profile.`
-              : `Document one practical ${primaryGapLabel} troubleshooting pattern.`
-        : "Maintain balanced readiness across categories.";
       return {
         submission,
         sortedScores,
         primaryGap,
-        focusAction,
       };
     })
     .sort((a, b) => b.submission.overall - a.submission.overall);
@@ -655,27 +629,6 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="coverage-grid roster-grid">
-            <div className="card">
-              <div className="section-title">
-                <p className="eyebrow">Roster</p>
-                <h2>Submission status</h2>
-              </div>
-              <div className="roster">
-                {techs.map((tech) => {
-                  const submission = submissions.find((item) => item.techName === tech);
-                  return (
-                    <div key={tech}>
-                      <span className={submission ? "dot done" : "dot"} />
-                      <strong>{tech}</strong>
-                      <small>{submission ? `${submission.level} · ${shortDate(submission.updatedAt)}` : "Not submitted"}</small>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-
           <section className="report-grid summary-only">
             <div className="card report-card">
               <div className="section-title">
@@ -759,10 +712,10 @@ export default function Home() {
           <section className="card report-card">
             <div className="section-title">
               <p className="eyebrow">Individual scorecards</p>
-              <h2>Strengths, gaps, and one focus action</h2>
+              <h2>Strengths and improvement areas</h2>
             </div>
             <div className="scorecard-grid">
-              {scorecards.map(({ submission, sortedScores, primaryGap, focusAction }) => (
+              {scorecards.map(({ submission, sortedScores, primaryGap }) => (
                 <article className="agent-scorecard" key={submission.techName}>
                   <div className="agent-scorecard-header">
                     <div>
@@ -785,7 +738,6 @@ export default function Home() {
                   <div className="scorecard-notes">
                     <p><b>Strength:</b> {sortedScores[0]?.label ?? "—"}</p>
                     <p><b>Focus:</b> {primaryGap?.label ?? "—"}</p>
-                    <p><b>Action:</b> {focusAction}</p>
                   </div>
                 </article>
               ))}
