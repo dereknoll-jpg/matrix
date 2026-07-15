@@ -37,35 +37,39 @@ function normalizeStoredSubmission(submission: StoredSubmission): StoredSubmissi
   };
 }
 
-export function normalizeSubmissions(value: unknown, depth = 0): StoredSubmission[] {
+export function coerceSubmissions(value: unknown, depth = 0): StoredSubmission[] {
   if (!value || depth > 3) return [];
 
   if (typeof value === "string") {
     try {
-      return normalizeSubmissions(JSON.parse(value), depth + 1);
+      return coerceSubmissions(JSON.parse(value), depth + 1);
     } catch {
       return [];
     }
   }
 
   if (Array.isArray(value)) {
-    return value.filter(isStoredSubmission).map(normalizeStoredSubmission);
+    return value.filter(isStoredSubmission);
   }
 
   if (typeof value === "object") {
     const objectValue = value as Record<string, unknown>;
     for (const key of ["submissions", "data", "result", "value"]) {
       if (key in objectValue) {
-        const normalized = normalizeSubmissions(objectValue[key], depth + 1);
+        const normalized = coerceSubmissions(objectValue[key], depth + 1);
         if (normalized.length) return normalized;
       }
     }
 
     const values = Object.values(objectValue);
-    if (values.some(isStoredSubmission)) return values.filter(isStoredSubmission).map(normalizeStoredSubmission);
+    if (values.some(isStoredSubmission)) return values.filter(isStoredSubmission);
   }
 
   return [];
+}
+
+export function normalizeSubmissions(value: unknown, depth = 0): StoredSubmission[] {
+  return coerceSubmissions(value, depth).map(normalizeStoredSubmission);
 }
 
 export function hasKv() {
@@ -107,7 +111,7 @@ export async function readSubmissions(): Promise<StoredSubmission[]> {
 }
 
 export async function writeSubmissions(submissions: StoredSubmission[]) {
-  const normalized = normalizeSubmissions(submissions);
+  const normalized = coerceSubmissions(submissions);
   if (!hasKv()) {
     memoryStore.__assessmentSubmissions = normalized;
     return;

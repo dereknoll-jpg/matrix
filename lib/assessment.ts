@@ -43,8 +43,8 @@ export type SubmissionResult = {
   gaps: string[];
 };
 
-export const SELF_ASSESSMENT_WEIGHT = 0.8;
-export const QUIZ_WEIGHT = 0.2;
+export const SELF_ASSESSMENT_WEIGHT = 0.7;
+export const QUIZ_WEIGHT = 0.3;
 
 export const categories: {
   key: CategoryKey;
@@ -372,11 +372,27 @@ function blendedCategoryScore(selfAverage: number, quizPercent: number | null) {
   return Math.round((selfAverage * SELF_ASSESSMENT_WEIGHT + quizScore * QUIZ_WEIGHT) * 10) / 10;
 }
 
+function normalizedRating(value: number) {
+  if (value <= 1) return 1.5;
+  if (value <= 2) return Math.round((value + 0.5) * 10) / 10;
+  if (value <= 3) return Math.round((2.5 + (value - 2) * 0.5) * 10) / 10;
+  if (value <= 4) return Math.round(value * 10) / 10;
+  return Math.min(4.5, Math.round((4 + (value - 4) * 0.5) * 10) / 10);
+}
+
+function normalizedSelfAverage(values: number[]) {
+  if (!values.length) return 0;
+  const normalized = values.map(normalizedRating);
+  return Math.round((normalized.reduce((sum, value) => sum + value, 0) / normalized.length) * 10) / 10;
+}
+
 export function rebalanceResult(result: SubmissionResult): SubmissionResult {
   const categoryScores = result.categoryScores.map((category) => {
-    const score = blendedCategoryScore(category.selfAverage, category.quizPercent);
+    const selfAverage = normalizedRating(category.selfAverage);
+    const score = blendedCategoryScore(selfAverage, category.quizPercent);
     return {
       ...category,
+      selfAverage,
       score,
       level: levelForScore(score),
     };
@@ -400,22 +416,22 @@ export function scoreAssessment(answers: AssessmentAnswers, quiz: QuizAnswers): 
   const categoryScores = categories.map((category) => {
     const selfScores = category.statements.map((statement) => Number(answers[statement.id] ?? 0)).filter(Boolean);
     const selfAverage = selfScores.length
-      ? selfScores.reduce((sum, value) => sum + value, 0) / selfScores.length
+      ? Math.round((selfScores.reduce((sum, value) => sum + value, 0) / selfScores.length) * 10) / 10
       : 0;
+    const normalizedAverage = normalizedSelfAverage(selfScores);
 
     const categoryQuiz = quizQuestions.filter((question) => question.category === category.key);
     const answeredQuiz = categoryQuiz.filter((question) => quiz[question.id] !== undefined);
     const correct = answeredQuiz.filter((question) => quiz[question.id] === question.correctIndex).length;
     const quizPercent = categoryQuiz.length ? correct / categoryQuiz.length : null;
-    const roundedSelfAverage = Math.round(selfAverage * 10) / 10;
     const roundedQuizPercent = quizPercent === null ? null : Math.round(quizPercent * 100);
-    const score = blendedCategoryScore(roundedSelfAverage, roundedQuizPercent);
+    const score = blendedCategoryScore(normalizedAverage, roundedQuizPercent);
 
     return {
       key: category.key,
       label: category.label,
       score,
-      selfAverage: roundedSelfAverage,
+      selfAverage,
       quizPercent: roundedQuizPercent,
       level: levelForScore(score),
     };
